@@ -76,7 +76,7 @@ public class Searcher {
 		int j = 0;
 	    for(Map.Entry<String, Double> e : results.entrySet()) { 
 	    	if(j < 5) {
-	    		writer.write("<td><img src='file:///"+e.getKey()+"' width=100 height=100></img></td>");
+	    		writer.write("<td><img src='file:///"+Math.round(e.getKey())+"' width=100 height=100></img></td>");
 	    		j++;
 	    	} else {
 	    		j = 0;
