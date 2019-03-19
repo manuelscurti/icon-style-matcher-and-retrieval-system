@@ -64,8 +64,13 @@ public class ShapeDetector implements GlobalFeature{
 	    }
 	}
 	
-	// detect circle, if it's detected returns the area of the circle
-	// uses HoughCircles technique, implemented in openCV
+
+	/**
+	 * detect circle, if it's detected returns the area of the circle
+	 * uses HoughCircles technique, implemented in openCV
+	 * @param img
+	 * @return
+	 */
 	public double detect_circle(Mat img) {
 		Mat circles = new Mat();
 
@@ -88,8 +93,12 @@ public class ShapeDetector implements GlobalFeature{
         return 0;
 	}
 	
-	// detect rectangle, if it's detected returns the area of the rectangle
-	// uses findContours method from openCV
+	/**
+	 * detect rectangle, if it's detected returns the area of the rectangle
+	 * uses findContours method from openCV
+	 * @param img
+	 * @return
+	 */
 	public double detect_rectangle(Mat img){	
 		List<MatOfPoint> contours = new ArrayList<>();
         Imgproc.findContours(img,contours,new Mat(),Imgproc.RETR_TREE,Imgproc.CHAIN_APPROX_SIMPLE);
@@ -122,10 +131,16 @@ public class ShapeDetector implements GlobalFeature{
 		return 0;
 	}
 	
-	//preprocess consists of:
-	// - resize img
-	// - paste img into bigger transparent background
-	// - apply gray scale transformation, gaussian blur and thresholding
+	/**
+	 * Applies some transformation to the input image:
+	 * - rescaling
+	 * - border extension
+	 * - gray scale transformation
+	 * - gaussian blur
+	 * - thresholding
+	 * @param img
+	 * @return
+	 */
 	public Mat preprocess(Mat img) {
 		
 		Mat proc = new Mat();
@@ -134,6 +149,7 @@ public class ShapeDetector implements GlobalFeature{
 		if(img.cols() > 300)
 			Imgproc.resize(img, proc, new Size(300, 300));
 		
+		//showResult(img);
 		Mat background = Imgcodecs.imread(PATH_TO_TRASP_BACKGROUND, Imgcodecs.IMREAD_UNCHANGED);
 		proc = overlayImage(background, proc, new Point(50,50));
 		//showResult(proc);
@@ -141,12 +157,14 @@ public class ShapeDetector implements GlobalFeature{
 		Imgproc.cvtColor(proc, proc, Imgproc.COLOR_BGR2GRAY); //gray scale
 		Imgproc.GaussianBlur(proc, proc, new Size(5,5), 0); // gaussian filter
 		Imgproc.adaptiveThreshold(proc, proc, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY_INV, 21, 2);
+		//showResult(proc);
 		
 		return proc;
 	}
 	
 	/**
 	 * overlays the foreground into the background image at the specified location
+	 * it is used in the preprocessing phase
 	 * @param background
 	 * @param foreground
 	 * @param location
@@ -215,7 +233,7 @@ public class ShapeDetector implements GlobalFeature{
 	}
 	
 	/**
-	 * utility function to convert a bufferedimage class object into a Mat class object
+	 * utility function to convert a BufferedImage class object into a Mat class object
 	 * @param image
 	 * @return
 	 * @throws IOException
@@ -242,11 +260,10 @@ public class ShapeDetector implements GlobalFeature{
         if ((tmpFeature.shape_byte.length!= this.shape_byte.length) || tmpFeature.shape_byte == null)
             throw new UnsupportedOperationException("Shape byte do not match");
 		
-		double dist = (double)Math.abs(tmpFeature.shape_detected - this.shape_detected);
-		//scale to range 0 to 100
-		double num_labels = 3; //rectangle,circle,undefined
-		
-		return (dist * 100)/num_labels;
+		if(tmpFeature.shape_detected == this.shape_detected)
+			return 0;
+		 
+		return 100;
 	}
 
 	@Override
@@ -275,7 +292,7 @@ public class ShapeDetector implements GlobalFeature{
 	public double[] getFeatureVector() {
 		return SerializationUtils.castToDoubleArray(shape_byte);
 	}
-
+	
 	@Override
 	public void extract(BufferedImage arg0) {
 		Mat img = new Mat();
@@ -294,6 +311,14 @@ public class ShapeDetector implements GlobalFeature{
 		double threshold_validation_max = img_area; // 300*300 (max icon size)
 		double threshold_validation_min_circle = threshold_validation_max / 3; //x are calibrated parameter
 		double threshold_validation_min_rect = threshold_validation_max / 2.5;
+		
+		/*
+		 * thresholds are used to avoid situations in which icons contains a rectangle or a circle but
+		 * it is not an outer container of the icon contents.
+		 * By setting a minimum value of the area that a circle or a rectangle should have, we consider
+		 * areas that are near the size of the whole icon, because it indicates that the area could contain 
+		 * the whole icon contents
+		 */
 		
 		if(max_circle_area >= threshold_validation_min_circle && max_rect_area < threshold_validation_min_rect)
 			//System.out.println("circle");

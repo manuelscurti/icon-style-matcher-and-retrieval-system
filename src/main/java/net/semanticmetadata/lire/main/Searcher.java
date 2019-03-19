@@ -29,21 +29,28 @@ public class Searcher {
 		
 	}
 	
+	/**
+	 * Searches for similiar images. takes as input a Document object representing the indexed image
+	 * Returns a sorted set of key-value pairs ordered by relevance. 
+	 * @param query
+	 * @return search results
+	 * @throws IOException
+	 */
 	public Map<String, Double> search(Document query) throws IOException{
 		Map<String, Double> results = new HashMap<>();
 
         IndexReader ir = DirectoryReader.open(FSDirectory.open(Paths.get("index")));
-        //SHAPE DETECTOR used to search images
-        ImageSearcher searcher = new GenericFastImageSearcher(150, CEDD.class);
+        //search images
+        ImageSearcher searcher = new GenericFastImageSearcher(100, FCTH.class);
         ImageSearchHits hits = searcher.search(query, ir);
         
         //re-rank based on other features
-        RerankFilter filter_fcth = new RerankFilter(FCTH.class, DocumentBuilder.FIELD_NAME_FCTH);
-        hits = filter_fcth.filter(hits, ir, query);
-      
+        RerankFilter filter_cedd = new RerankFilter(CEDD.class, DocumentBuilder.FIELD_NAME_CEDD);
+        hits = filter_cedd.filter(hits, ir, query);
+        
         RerankFilter filter_shape = new RerankFilter(ShapeDetector.class, "ShapeDetector");
         hits = filter_shape.filter(hits, ir, query);
-        
+
         for (int i = 0; i < hits.length(); i++) {
             String fileName = ir.document(hits.documentID(i)).getValues(DocumentBuilder.FIELD_NAME_IDENTIFIER)[0];
             if(!results.containsKey(fileName))
@@ -60,6 +67,10 @@ public class Searcher {
         return sorted;
 	}
 	
+	/**
+	 * Utility function to print the results in a human readable format
+	 * @param results
+	 */
 	public void printResults(Map<String, Double> results) {
 
 	    for(Map.Entry<String, Double> e : results.entrySet()) 
@@ -67,6 +78,13 @@ public class Searcher {
 	    
 	}
 	
+	/**
+	 * Save results in HTML format in the specified path folder
+	 * @param searchimg - name of the query image
+	 * @param path - folder path where to save the result
+	 * @param results - set of key value pairs representing the results of the search
+	 * @throws IOException
+	 */
 	public void saveResults(String searchimg, String path, Map<String, Double> results) throws IOException {
 		Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
@@ -76,7 +94,7 @@ public class Searcher {
 		int j = 0;
 	    for(Map.Entry<String, Double> e : results.entrySet()) { 
 	    	if(j < 5) {
-	    		writer.write("<td><img src='file:///"+Math.round(e.getKey())+"' width=100 height=100></img></td>");
+	    		writer.write("<td>"+Math.round(e.getValue())+"<img src='file:///"+e.getKey()+"' width=100 height=100></img></td>");
 	    		j++;
 	    	} else {
 	    		j = 0;

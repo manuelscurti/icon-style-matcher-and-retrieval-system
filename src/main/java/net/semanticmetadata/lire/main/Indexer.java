@@ -27,12 +27,19 @@ public class Indexer {
 	
 	public Indexer() {
 		this.globalDocumentBuilder = new GlobalDocumentBuilder(false,false);
-        globalDocumentBuilder.addExtractor(CEDD.class);
+        //load feature extractors to be used to create the index
+		globalDocumentBuilder.addExtractor(CEDD.class);
         globalDocumentBuilder.addExtractor(FCTH.class);
         globalDocumentBuilder.addExtractor(ShapeDetector.class); //in the image path should be present an image called background.png 400x400 transparent
        
 	}
 	
+	/**
+	 * Creates a Lucene index for the images contained in the specified folder
+	 * saves it into the index folder inside the Lucene installation folder
+	 * @param folder_path
+	 * @throws IOException
+	 */
 	public void createIndex(String folder_path) throws IOException {
 		File f = new File(folder_path);
 		if (!f.exists() || !f.isDirectory())
@@ -60,6 +67,12 @@ public class Indexer {
         System.out.println("Finished indexing.");
 	}
 	
+	/**
+	 * Converts a BufferedImage object into a Lucene Document
+	 * it is used when searching by image 
+	 * @param img
+	 * @return converted image into Document object
+	 */
 	public Document createDocument(BufferedImage img) {
 		return globalDocumentBuilder.createDocument(img, "query_image");
 	}

@@ -25,3 +25,6 @@ I suggest you to put lucene main folder into C:/
 2. Search
 	path/to/jar search path/to/image_to_search path/to/folder_for_saving_results
 
+## Authors
+- Manuel Scurti
+- Jeanne Bosc-Bierne

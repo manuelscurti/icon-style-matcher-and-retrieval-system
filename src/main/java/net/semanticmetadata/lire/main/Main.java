@@ -82,6 +82,13 @@ public class Main {
 				e.printStackTrace();
 			}
             
+    	} else if(args[0].equals("test")) {
+    		TestAccuracy test = new TestAccuracy();
+    		try {
+				test.test();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
     	}
     	
 
